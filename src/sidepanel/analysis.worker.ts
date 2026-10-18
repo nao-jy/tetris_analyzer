@@ -21,6 +21,11 @@ type AnalysisRequest = {
   combo: number;
   backToBack: boolean;
   iterations: number;
+  errors?: {
+    boardRejected?: string;
+    moveFailed?: string;
+    analysisFailed?: string;
+  };
 };
 
 const workerScope = self as unknown as {
@@ -30,7 +35,8 @@ const workerScope = self as unknown as {
 
 workerScope.onmessage = async (event: MessageEvent<AnalysisRequest>) => {
   try {
-    const { board, queue, hold, combo, backToBack, iterations } = event.data;
+    const { board, queue, hold, combo, backToBack, iterations, errors } =
+      event.data;
     await initWasm(wasmUrl);
     configure(botConfigJson as unknown as BotConfig);
     initialize();
@@ -43,11 +49,14 @@ workerScope.onmessage = async (event: MessageEvent<AnalysisRequest>) => {
       back_to_back: backToBack,
     });
     const startResponse = started as
-      | { type: string; reason?: unknown }
-      | undefined;
+      { type: string; reason?: unknown } | undefined;
     if (startResponse?.type === "error")
       throw new Error(
-        String(startResponse.reason ?? "盤面を受け付けませんでした。"),
+        String(
+          startResponse.reason ??
+            errors?.boardRejected ??
+            "盤面を受け付けませんでした。",
+        ),
       );
     const moves: Placement[] = [];
     let nodes = 0;
@@ -74,11 +83,14 @@ workerScope.onmessage = async (event: MessageEvent<AnalysisRequest>) => {
       if (index < queue.length - 1) {
         const playResponse = process_message({ type: "play", move });
         const playError = playResponse as
-          | { type: string; reason?: unknown }
-          | undefined;
+          { type: string; reason?: unknown } | undefined;
         if (playError?.type === "error")
           throw new Error(
-            String(playError.reason ?? "着手を適用できませんでした。"),
+            String(
+              playError.reason ??
+                errors?.moveFailed ??
+                "着手を適用できませんでした。",
+            ),
           );
       }
     }
@@ -92,7 +104,10 @@ workerScope.onmessage = async (event: MessageEvent<AnalysisRequest>) => {
   } catch (error) {
     workerScope.postMessage({
       ok: false,
-      error: error instanceof Error ? error.message : "解析に失敗しました。",
+      error:
+        error instanceof Error
+          ? error.message
+          : (event.data.errors?.analysisFailed ?? "解析に失敗しました。"),
     });
   }
 };

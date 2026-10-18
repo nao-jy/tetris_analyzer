@@ -105,11 +105,18 @@ function classifyCell(
   return confidence >= minimumCoverage ? winner : null;
 }
 
-export async function imageToBoard(dataUrl: string, rows: number): Promise<Cell[][]> {
+export async function imageToBoard(
+  dataUrl: string,
+  rows: number,
+  errors = {
+    image: "撮影画像を読み込めませんでした",
+    canvas: "画像解析用のCanvasを作成できませんでした",
+  },
+): Promise<Cell[][]> {
   const image = new Image();
   await new Promise<void>((resolve, reject) => {
     image.onload = () => resolve();
-    image.onerror = () => reject(new Error("撮影画像を読み込めませんでした"));
+    image.onerror = () => reject(new Error(errors.image));
     image.src = dataUrl;
   });
 
@@ -117,7 +124,7 @@ export async function imageToBoard(dataUrl: string, rows: number): Promise<Cell[
   canvas.width = image.naturalWidth;
   canvas.height = image.naturalHeight;
   const context = canvas.getContext("2d", { willReadFrequently: true });
-  if (!context) throw new Error("画像解析用のCanvasを作成できませんでした");
+  if (!context) throw new Error(errors.canvas);
   context.drawImage(image, 0, 0);
   const { data, width, height } = context.getImageData(
     0,

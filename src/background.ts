@@ -54,7 +54,10 @@ async function cropScreenshot(dataUrl: string, request: CaptureRequest) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type !== "capture-board-region") {
-    if (typeof message?.type === "string" && message.type.startsWith("board-screenshot-")) {
+    if (
+      typeof message?.type === "string" &&
+      message.type.startsWith("board-screenshot-")
+    ) {
       sendResponse({ ok: true });
     }
     return false;
@@ -63,7 +66,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const request = message as CaptureRequest;
   const windowId = sender.tab?.windowId;
   if (windowId === undefined) {
-    sendResponse({ ok: false, error: "撮影対象のタブが見つかりませんでした。" });
+    sendResponse({
+      ok: false,
+      error: "撮影対象のタブが見つかりませんでした。",
+    });
     return false;
   }
 

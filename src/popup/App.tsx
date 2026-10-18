@@ -1,21 +1,20 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import "./App.css";
 
 export default function App() {
+  const { t, i18n } = useTranslation();
   const [error, setError] = useState("");
 
   const openSidePanel = async () => {
     setError("");
     try {
       const currentWindow = await chrome.windows.getCurrent();
-      if (currentWindow.id === undefined)
-        throw new Error("ウィンドウを取得できませんでした。");
+      if (currentWindow.id === undefined) throw new Error(t("windowError"));
       await chrome.sidePanel.open({ windowId: currentWindow.id });
       window.close();
     } catch {
-      setError(
-        "サイドパネルを開けませんでした。Chromeを最新版にして、もう一度お試しください。",
-      );
+      setError(t("openPanelError"));
     }
   };
 
@@ -27,7 +26,7 @@ export default function App() {
         </div>
         <div>
           <p className="popup-eyebrow">COLD CLEAR 2</p>
-          <h1>盤面アナライザー</h1>
+          <h1>{t("appName")}</h1>
         </div>
       </header>
       <div className="popup-message">
@@ -35,19 +34,30 @@ export default function App() {
           ◧
         </span>
         <div>
-          <h2>サイドパネルで解析</h2>
-          <p>盤面の編集や候補手の確認は、サイドパネルから行えます。</p>
+          <h2>{t("popupTitle")}</h2>
+          <p>{t("popupDesc")}</p>
         </div>
       </div>
       <button className="open-panel-button" onClick={openSidePanel}>
-        サイドパネルを開く <span aria-hidden="true">→</span>
+        {t("openPanel")} <span aria-hidden="true">→</span>
       </button>
       {error && (
         <p className="popup-error" role="alert">
           {error}
         </p>
       )}
-      <p className="popup-hint">ページを見ながら、横で盤面を分析できます。</p>
+      <p className="popup-hint">{t("popupHint")}</p>
+      <label className="language-control">
+        <span>{t("language")}</span>
+        <select
+          aria-label={t("language")}
+          value={i18n.resolvedLanguage ?? i18n.language}
+          onChange={(event) => void i18n.changeLanguage(event.target.value)}
+        >
+          <option value="ja">{t("japanese")}</option>
+          <option value="en">{t("english")}</option>
+        </select>
+      </label>
     </main>
   );
 }

@@ -1,5 +1,6 @@
 :root {
-  font-family: 'Avenir Next', 'Hiragino Kaku Gothic ProN', 'Yu Gothic UI', sans-serif;
+  font-family:
+    "Avenir Next", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", sans-serif;
   color: #e9edf5;
   background: #101318;
   font-synthesis: none;
@@ -11,9 +12,27 @@
   font-size: 13px;
 }
 
-* { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; min-height: 100vh; }
-button, input, select { font: inherit; }
-button { color: inherit; }
-select, input { color-scheme: dark; }
-::selection { background: #96edc0; color: #101318; }
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  color: inherit;
+}
+select,
+input {
+  color-scheme: dark;
+}
+::selection {
+  background: #96edc0;
+  color: #101318;
+}

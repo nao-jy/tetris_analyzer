@@ -1,18 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { Piece, Placement, Rotation } from "../coldclear/cold_clear_2";
 import { imageToBoard } from "./imageAnalysis";
 import "./App.css";
 
 const PIECES: Piece[] = ["I", "O", "T", "L", "J", "S", "Z"];
-const PIECE_NAMES: Record<Piece, string> = {
-  I: "I ミノ",
-  O: "O ミノ",
-  T: "T ミノ",
-  L: "L ミノ",
-  J: "J ミノ",
-  S: "S ミノ",
-  Z: "Z ミノ",
-};
 const START_ROWS = 40;
 const START_HEIGHT = 20;
 type Cell = Piece | "G" | null;
@@ -27,10 +19,6 @@ function boardToTbpRows(board: Board): Board {
   // The editor stores rows top-to-bottom; TBP/Cold Clear expects row 0 at y=0
   // (the bottom of the playfield).
   return [...board].reverse().map((row) => [...row]);
-}
-
-function pieceName(piece: Piece) {
-  return PIECE_NAMES[piece];
 }
 
 // TBP x/y is the SRS True Rotation center, not the mino bounding-box corner.
@@ -167,7 +155,13 @@ function beginRegionSelection(
   selectionId: string,
   rows: number,
   initialRegion?: SavedRegion | null,
+  labels?: Record<string, string>,
 ) {
+  const label = (key: string) => labels?.[key] ?? key;
+  const sizedInstructions = label("dragSelectSized").replace(
+    "{{n}}",
+    String(rows),
+  );
   document.getElementById("tetris-board-region-overlay")?.remove();
   const overlay = document.createElement("div");
   overlay.id = "tetris-board-region-overlay";
@@ -201,9 +195,9 @@ function beginRegionSelection(
     pointerEvents: "auto",
   });
   const promptText = document.createElement("span");
-  promptText.textContent = `盤面の左上から右下までドラッグ（10列 × ${rows}段）`;
+  promptText.textContent = sizedInstructions;
   const cancelFromPrompt = document.createElement("button");
-  cancelFromPrompt.textContent = "キャンセル";
+  cancelFromPrompt.textContent = label("cancel");
   Object.assign(cancelFromPrompt.style, {
     padding: "5px 8px",
     border: "1px solid #46514d",
@@ -324,9 +318,9 @@ function beginRegionSelection(
     });
     return button;
   };
-  const captureButton = makeButton("撮影して盤面に反映", true);
-  const retryButton = makeButton("範囲を選び直す");
-  const cancelButton = makeButton("キャンセル");
+  const captureButton = makeButton(label("captureBoard"), true);
+  const retryButton = makeButton(label("retrySelection"));
+  const cancelButton = makeButton(label("cancel"));
   toolbar.append(captureButton, retryButton, cancelButton);
   overlay.append(selection, prompt, toolbar);
   document.documentElement.append(overlay);
@@ -384,7 +378,7 @@ function beginRegionSelection(
     selection.style.display = "none";
     toolbar.style.display = "none";
     setHandlesVisible(false);
-    promptText.textContent = `盤面の左上から右下までドラッグ（10列 × ${rows}段）`;
+    promptText.textContent = sizedInstructions;
   };
 
   overlay.addEventListener("pointerdown", (event) => {
@@ -398,12 +392,12 @@ function beginRegionSelection(
     if (selected && handle) {
       dragMode = "resize";
       activeHandle = handle.dataset.resizeHandle ?? "";
-      promptText.textContent = "枠の辺や角をドラッグしてサイズを調整";
+      promptText.textContent = label("resizeHint");
       return;
     }
     if (selected && selection.contains(target)) {
       dragMode = "move";
-      promptText.textContent = "枠をドラッグして位置を調整";
+      promptText.textContent = label("moveHint");
       return;
     }
 
@@ -411,7 +405,7 @@ function beginRegionSelection(
     selected = false;
     toolbar.style.display = "none";
     setHandlesVisible(false);
-    promptText.textContent = "盤面の左上から右下までドラッグして範囲を選択";
+    promptText.textContent = label("selectHint");
     updateDrawBox(startX, startY);
   });
   overlay.addEventListener("pointermove", (event) => {
@@ -466,20 +460,18 @@ function beginRegionSelection(
     const completedMode = dragMode;
     dragMode = null;
     if (completedMode !== "draw") {
-      promptText.textContent =
-        "枠内をドラッグして移動、辺や角をドラッグして微調整";
+      promptText.textContent = label("adjustHint");
       placeToolbar();
       return;
     }
     updateDrawBox(event.clientX, event.clientY);
     if (box.width < 100 || box.height < rows * 5) {
       resetSelection();
-      promptText.textContent = "範囲が小さすぎます。大きめに選択してください";
+      promptText.textContent = label("tooSmall");
       return;
     }
     selected = true;
-    promptText.textContent =
-      "枠内をドラッグして移動、辺や角をドラッグして微調整";
+    promptText.textContent = label("adjustHint");
     setHandlesVisible(true);
     toolbar.style.display = "flex";
     placeToolbar();
@@ -493,7 +485,7 @@ function beginRegionSelection(
     if (!selected) return;
     selected = false;
     captureButton.disabled = true;
-    captureButton.textContent = "撮影中…";
+    captureButton.textContent = label("capturing");
     overlay.style.display = "none";
     await new Promise<void>((resolve) =>
       requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
@@ -510,7 +502,7 @@ function beginRegionSelection(
         viewportHeight: innerHeight,
       });
       if (!response?.ok)
-        throw new Error(response?.error ?? "撮影に失敗しました。");
+        throw new Error(response?.error ?? label("captureFailed"));
       await chrome.runtime.sendMessage({
         type: "board-screenshot-captured",
         selectionId,
@@ -525,9 +517,9 @@ function beginRegionSelection(
       overlay.style.display = "block";
       selected = true;
       captureButton.disabled = false;
-      captureButton.textContent = "もう一度撮影";
+      captureButton.textContent = label("captureAgain");
       promptText.textContent =
-        error instanceof Error ? error.message : "撮影に失敗しました。";
+        error instanceof Error ? error.message : label("captureFailed");
       toolbar.style.display = "flex";
       placeToolbar();
       sendNotice("board-screenshot-retry");
@@ -561,8 +553,7 @@ function beginRegionSelection(
     if (selected) {
       renderBox();
       setHandlesVisible(true);
-      promptText.textContent =
-        "前回の範囲を復元しました。枠内を移動、辺や角で微調整できます";
+      promptText.textContent = label("restored");
       toolbar.style.display = "flex";
       placeToolbar();
     }
@@ -570,6 +561,7 @@ function beginRegionSelection(
 }
 
 function App() {
+  const { t } = useTranslation();
   const [board, setBoard] = useState<Board>(emptyBoard);
   const [height, setHeight] = useState(START_HEIGHT);
   const [tool, setTool] = useState<Cell>("T");
@@ -655,7 +647,7 @@ function App() {
       if (message.type === "board-screenshot-failed") {
         captureSession.current = null;
         setCaptureStatus("idle");
-        setCaptureError(message.error ?? "撮影に失敗しました。");
+        setCaptureError(message.error ?? t("captureFailed"));
         return;
       }
       if (message.type !== "board-screenshot-captured" || !message.dataUrl)
@@ -669,7 +661,10 @@ function App() {
       const rowCount = captureRows.current;
       setCaptureStatus("analyzing");
       setCaptureError("");
-      void imageToBoard(message.dataUrl, rowCount)
+      void imageToBoard(message.dataUrl, rowCount, {
+        image: t("captureImageLoadFailed"),
+        canvas: t("canvasFailed"),
+      })
         .then((scannedBoard) => {
           const nextBoard = emptyBoard();
           const offset = START_ROWS - rowCount;
@@ -681,9 +676,7 @@ function App() {
         })
         .catch((imageError: unknown) => {
           setCaptureError(
-            imageError instanceof Error
-              ? imageError.message
-              : "画像を解析できませんでした。",
+            imageError instanceof Error ? imageError.message : t("imageFailed"),
           );
         })
         .finally(() => {
@@ -730,28 +723,44 @@ function App() {
         !permissions.includes("activeTab") ||
         !permissions.includes("scripting")
       ) {
-        throw new Error(
-          "画面読み取りの権限が未反映です。chrome://extensions で拡張機能を再読み込みしてください。",
-        );
+        throw new Error(t("permissionError"));
       }
       const [tab] = await chrome.tabs.query({
         active: true,
         lastFocusedWindow: true,
       });
-      if (tab?.id === undefined)
-        throw new Error("撮影するタブが見つかりませんでした。");
+      if (tab?.id === undefined) throw new Error(t("noTab"));
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         func: beginRegionSelection,
-        args: [selectionId, height, readSavedRegion() ?? null],
+        args: [
+          selectionId,
+          height,
+          readSavedRegion() ?? null,
+          Object.fromEntries(
+            [
+              "cancel",
+              "captureBoard",
+              "retrySelection",
+              "dragSelectSized",
+              "resizeHint",
+              "moveHint",
+              "selectHint",
+              "adjustHint",
+              "tooSmall",
+              "capturing",
+              "captureAgain",
+              "captureFailed",
+              "restored",
+            ].map((key) => [key, t(key, { n: "{{n}}" })]),
+          ),
+        ],
       });
     } catch (startError) {
       captureSession.current = null;
       setCaptureStatus("idle");
       setCaptureError(
-        startError instanceof Error
-          ? startError.message
-          : "範囲選択を開始できませんでした。拡張機能を再読み込みして再試行してください。",
+        startError instanceof Error ? startError.message : t("selectionFailed"),
       );
     }
   };
@@ -785,7 +794,7 @@ function App() {
       worker.terminate();
       setLoading(false);
       if (!event.data.ok) {
-        setError(event.data.error ?? "解析に失敗しました。");
+        setError(event.data.error ?? t("analysisFailed"));
         return;
       }
       const moves = event.data.moves ?? [];
@@ -804,9 +813,7 @@ function App() {
     worker.onerror = () => {
       worker.terminate();
       setLoading(false);
-      setError(
-        "解析ワーカーを起動できませんでした。拡張機能を再読み込みしてください。",
-      );
+      setError(t("workerFailed"));
     };
     worker.postMessage({
       board: boardToTbpRows(analyzedBoard),
@@ -818,6 +825,11 @@ function App() {
         1,
         Math.min(100000, Math.floor(Number(iterations) || 1)),
       ),
+      errors: {
+        boardRejected: t("boardRejected"),
+        moveFailed: t("moveFailed"),
+        analysisFailed: t("analysisFailed"),
+      },
     });
   };
 
@@ -834,7 +846,7 @@ function App() {
         </div>
         <div>
           <p className="eyebrow">COLD CLEAR 2</p>
-          <h1>盤面アナライザー</h1>
+          <h1>{t("appName")}</h1>
         </div>
       </header>
 
@@ -842,40 +854,43 @@ function App() {
         <div className="section-heading">
           <div>
             <span className="step-number">01</span>
-            <h2>盤面</h2>
+            <h2>{t("board")}</h2>
           </div>
           <div className="board-actions">
             <button
               className="scan-button"
               onClick={startScreenshot}
               disabled={captureStatus !== "idle"}
-              title="ページ上で盤面範囲を選択して読み取る"
+              title={t("scanTitle")}
             >
-              <span aria-hidden="true">▧</span> 画像から
+              <span aria-hidden="true">▧</span> {t("scan")}
             </button>
             <label className="height-control">
-              高さ{" "}
+              {t("height")}{" "}
               <select
                 value={height}
                 onChange={(e) => setHeight(Number(e.target.value))}
               >
                 {[20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40].map((n) => (
                   <option key={n} value={n}>
-                    {n}段
+                    {t("rows", { n })}
                   </option>
                 ))}
               </select>
             </label>
             <button className="text-button" onClick={clearBoard}>
-              クリア
+              {t("clear")}
             </button>
           </div>
         </div>
-        <div className="board-editor" aria-label={`${height}段のテトリス盤面`}>
+        <div
+          className="board-editor"
+          aria-label={t("boardLabel", { n: height })}
+        >
           {visibleRows.map((row, y) =>
             row.map((cell, x) => (
               <button
-                aria-label={`${height - y}段目 ${x + 1}列目 ${cell === "G" ? "お邪魔ブロック" : cell ? pieceName(cell) : "空"}`}
+                aria-label={`${t("rows", { n: height - y })} ${x + 1} ${t("cellColors")}: ${cell === "G" ? t("garbage") : cell ? `${cell} ${t("mino")}` : t("empty")}`}
                 className={`cell ${cell ? `filled piece-${cell.toLowerCase()}` : ""}`}
                 key={`${y}-${x}`}
                 onPointerDown={(event) => {
@@ -888,21 +903,20 @@ function App() {
                   if (event.detail === 0) editCell(y, x);
                 }}
                 onDragStart={(event) => event.preventDefault()}
-                title={`${x + 1}列・${height - y}段`}
+                title={t("cellTitle", { x: x + 1, y: height - y })}
               />
             )),
           )}
         </div>
         <div className="board-footer">
-          <span>10 列 × {height} 段</span>
-          <span>ドラッグして連続編集</span>
+          <span>{t("columnsRows", { n: height })}</span>
+          <span>{t("dragEdit")}</span>
         </div>
         {captureStatus !== "idle" && (
           <p className="capture-status" role="status">
-            {captureStatus === "selecting" &&
-              "ページ上で盤面範囲を選択してください"}
-            {captureStatus === "capturing" && "スクリーンショットを撮影中…"}
-            {captureStatus === "analyzing" && "セルの色を解析中…"}
+            {captureStatus === "selecting" && t("selectBoard")}
+            {captureStatus === "capturing" && t("takingScreenshot")}
+            {captureStatus === "analyzing" && t("analyzingCells")}
           </p>
         )}
         {captureError && (
@@ -910,14 +924,14 @@ function App() {
             {captureError}
           </p>
         )}
-        <div className="palette" aria-label="セルの色">
+        <div className="palette" aria-label={t("cellColors")}>
           <button
             className={`palette-item erase ${tool === null ? "selected" : ""}`}
             onClick={() => setTool(null)}
             aria-pressed={tool === null}
           >
             <span className="swatch">⌫</span>
-            <span>消去</span>
+            <span>{t("erase")}</span>
           </button>
           <button
             className={`palette-item ${tool === "G" ? "selected" : ""}`}
@@ -925,7 +939,7 @@ function App() {
             aria-pressed={tool === "G"}
           >
             <span className="swatch garbage-swatch" />
-            <span>お邪魔</span>
+            <span>{t("garbage")}</span>
           </button>
           {PIECES.map((piece) => (
             <button
@@ -945,13 +959,13 @@ function App() {
         <div className="section-heading">
           <div>
             <span className="step-number">02</span>
-            <h2>ゲーム状態</h2>
+            <h2>{t("gameState")}</h2>
           </div>
-          <span className="section-caption">解析条件</span>
+          <span className="section-caption">{t("conditions")}</span>
         </div>
         <div className="state-grid">
           <label className="field">
-            <span>ホールド</span>
+            <span>{t("hold")}</span>
             <select
               value={hold}
               onChange={(e) => {
@@ -959,16 +973,16 @@ function App() {
                 setResult(null);
               }}
             >
-              <option value="">なし</option>
+              <option value="">{t("none")}</option>
               {PIECES.map((p) => (
                 <option key={p} value={p}>
-                  {p} ミノ
+                  {p} {t("mino")}
                 </option>
               ))}
             </select>
           </label>
           <label className="field">
-            <span>REN / コンボ</span>
+            <span>{t("combo")}</span>
             <input
               type="number"
               min="0"
@@ -984,7 +998,7 @@ function App() {
         <label className="toggle-row">
           <span>
             <strong>Back-to-Back</strong>
-            <small>B2B継続中</small>
+            <small>{t("b2b")}</small>
           </span>
           <input
             type="checkbox"
@@ -1002,9 +1016,11 @@ function App() {
         <div className="section-heading">
           <div>
             <span className="step-number">03</span>
-            <h2>ネクスト</h2>
+            <h2>{t("next")}</h2>
           </div>
-          <span className="section-caption">{queue.length} 個</span>
+          <span className="section-caption">
+            {t("count", { n: queue.length })}
+          </span>
         </div>
         <div className="queue-list">
           {queue.map((piece, i) => (
@@ -1013,7 +1029,7 @@ function App() {
                 {String(i + 1).padStart(2, "0")}
               </span>
               <select
-                aria-label={`ネクスト ${i + 1}`}
+                aria-label={t("nextIndex", { n: i + 1 })}
                 value={piece}
                 onChange={(e) => updateQueue(i, e.target.value as Piece)}
               >
@@ -1025,7 +1041,7 @@ function App() {
               </select>
               <button
                 className="remove-slot"
-                aria-label={`ネクスト ${i + 1} を削除`}
+                aria-label={t("removeNext", { n: i + 1 })}
                 onClick={() => {
                   setQueue((current) =>
                     current.filter((_, index) => index !== i),
@@ -1044,17 +1060,17 @@ function App() {
               setResult(null);
             }}
           >
-            ＋ ネクストを追加
+            {t("addNext")}
           </button>
         </div>
       </section>
 
       <section className="analysis-section">
         <label className="iteration-control">
-          <span>探索量</span>
+          <span>{t("searchAmount")}</span>
           <input
             type="number"
-            aria-label="探索量"
+            aria-label={t("searchAmount")}
             min="1"
             max="100000"
             step="1"
@@ -1063,10 +1079,10 @@ function App() {
             onChange={(e) => setIterations(e.target.value)}
           />
           <datalist id="iteration-presets">
-            <option value="1000" label="軽い" />
-            <option value="5000" label="標準" />
-            <option value="20000" label="深い" />
-            <option value="50000" label="最深プリセット" />
+            <option value="1000" label={t("light")} />
+            <option value="5000" label={t("standard")} />
+            <option value="20000" label={t("deep")} />
+            <option value="50000" label={t("deepest")} />
           </datalist>
         </label>
         <button
@@ -1074,10 +1090,10 @@ function App() {
           onClick={analyze}
           disabled={loading || queue.length === 0}
         >
-          <span>{loading ? "解析中…" : "盤面を解析"}</span>
+          <span>{loading ? t("analyzing") : t("analyze")}</span>
           <span className="button-arrow">{loading ? "◌" : "→"}</span>
         </button>
-        <p className="engine-note">入力したネクストに沿って連続解析します</p>
+        <p className="engine-note">{t("engineNote")}</p>
       </section>
 
       {error && (
@@ -1089,37 +1105,37 @@ function App() {
         <div className="result-heading">
           <div>
             <span className="step-number">04</span>
-            <h2>着地後の盤面</h2>
+            <h2>{t("afterBoard")}</h2>
           </div>
           <span className="engine-stat">
             {result
               ? `${result.nodes.toLocaleString()} nodes · ${result.nps.toLocaleString()} n/s`
-              : "解析前"}
+              : t("beforeAnalysis")}
           </span>
         </div>
-        <div className="carousel-controls" aria-label="盤面の手順">
+        <div className="carousel-controls" aria-label={t("boardSteps")}>
           <button
             className="carousel-button"
             type="button"
-            aria-label="前の手の盤面"
+            aria-label={t("prevBoard")}
             disabled={!activeResultStep || activeStepIndex === 0}
             onClick={() =>
               setActiveStepIndex((index) => Math.max(0, index - 1))
             }
           >
-            ← 前
+            {t("prev")}
           </button>
           <span aria-live="polite">
             {resultSteps.length > 0
-              ? `${activeStepIndex + 1} / ${resultSteps.length} 手目`
+              ? `${activeStepIndex + 1} / ${resultSteps.length} · ${t("moveIndex", { n: activeStepIndex + 1 })}`
               : result
-                ? "候補なし"
-                : "未解析"}
+                ? t("noCandidates")
+                : t("notAnalyzed")}
           </span>
           <button
             className="carousel-button"
             type="button"
-            aria-label="次の手の盤面"
+            aria-label={t("nextBoard")}
             disabled={
               !activeResultStep || activeStepIndex >= resultSteps.length - 1
             }
@@ -1129,25 +1145,31 @@ function App() {
               )
             }
           >
-            次 →
+            {t("nextArrow")}
           </button>
         </div>
         <div className="preview-meta">
           {activeResultStep ? (
             <>
               <span>
-                {activeResultStep.move.location.type} ミノ ·{" "}
+                {activeResultStep.move.location.type} {t("mino")} ·{" "}
                 {activeResultStep.move.location.orientation.toUpperCase()}
                 {activeResultStep.move.spin === "none"
                   ? ""
                   : ` · ${activeResultStep.move.spin} spin`}
               </span>
-              <span>{activeResultStep.clearedLines} ライン消去</span>
+              <span>
+                {t("linesCleared", { n: activeResultStep.clearedLines })}
+              </span>
             </>
           ) : (
             <>
-              <span>{result ? "候補手なし" : "解析すると盤面を表示"}</span>
-              <span>— ライン消去</span>
+              <span>
+                {result
+                  ? t("noCandidatesAvailable")
+                  : t("showBoardAfterAnalysis")}
+              </span>
+              <span>{t("linesClearedDash")}</span>
             </>
           )}
         </div>
@@ -1170,7 +1192,7 @@ function App() {
                   <div
                     className="board-editor preview-board"
                     role="grid"
-                    aria-label={`${stepIndex + 1}手目のあと盤面`}
+                    aria-label={t("boardAfterMove", { n: stepIndex + 1 })}
                     style={{
                       gridTemplateRows: `repeat(${height}, minmax(0, 1fr))`,
                       aspectRatio: `10 / ${height}`,
@@ -1181,7 +1203,7 @@ function App() {
                       .flatMap((row, y) =>
                         row.map((cell, x) => (
                           <div
-                            aria-label={`${height - y}段目 ${x + 1}列目 ${cell === "G" ? "お邪魔ブロック" : cell ? pieceName(cell) : "空"}`}
+                            aria-label={`${t("rows", { n: height - y })} ${x + 1}: ${cell === "G" ? t("garbage") : cell ? `${cell} ${t("mino")}` : t("empty")}`}
                             className={`cell preview-cell ${cell ? `filled piece-${cell.toLowerCase()}` : ""}`}
                             key={`preview-${stepIndex}-${y}-${x}`}
                             role="gridcell"
@@ -1201,7 +1223,7 @@ function App() {
                 <div
                   className="board-editor preview-board"
                   role="grid"
-                  aria-label="解析前の空盤面"
+                  aria-label={t("emptyBoardBeforeAnalysis")}
                   style={{
                     gridTemplateRows: `repeat(${height}, minmax(0, 1fr))`,
                     aspectRatio: `10 / ${height}`,
@@ -1212,7 +1234,7 @@ function App() {
                     .flatMap((row, y) =>
                       row.map((_, x) => (
                         <div
-                          aria-label={`${height - y}段目 ${x + 1}列目 空`}
+                          aria-label={`${t("rows", { n: height - y })} ${x + 1}: ${t("empty")}`}
                           className="cell preview-cell"
                           key={`placeholder-${y}-${x}`}
                           role="gridcell"
@@ -1227,14 +1249,14 @@ function App() {
         <p className="result-footnote">
           {result
             ? resultSteps.length > 0
-              ? "入力したネクストに沿って最上位候補を続けて適用しています。"
-              : "候補手がありません。盤面とネクストを確認してください。"
-            : "盤面を解析すると、着地後の盤面をここに表示します。"}
+              ? t("resultApplied")
+              : t("noResult")
+            : t("analyzeToShow")}
         </p>
       </section>
       <footer className="app-footer">
         <span className="status-dot" />
-        オフライン解析 · データは端末内で処理
+        {t("offline")}
       </footer>
     </main>
   );
