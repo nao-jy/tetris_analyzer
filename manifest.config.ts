@@ -10,19 +10,10 @@ export default defineManifest({
     48: 'public/logo.png',
   },
   action: {
-    default_icon: {
-      48: 'public/logo.png',
-    },
+    default_icon: { 48: 'public/logo.png' },
     default_popup: 'src/popup/index.html',
   },
-  permissions: [
-    'sidePanel',
-    'contentSettings',
-  ],
-  content_scripts: [{
-    js: ['src/content/main.tsx'],
-    matches: ['https://*/*'],
-  }],
+  permissions: ['sidePanel'],
   side_panel: {
     default_path: 'src/sidepanel/index.html',
   },
