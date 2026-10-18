@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Piece, Placement } from "../coldclear/cold_clear_2";
+import type { Piece, Placement, Rotation } from "../coldclear/cold_clear_2";
 import { imageToBoard } from "./imageAnalysis";
 import "./App.css";
 
@@ -23,8 +23,101 @@ const SAVED_REGION_KEY = "tetrisAnalyzerCaptureRegion";
 const emptyBoard = (): Board =>
   Array.from({ length: START_ROWS }, () => Array<Cell>(10).fill(null));
 
+function boardToTbpRows(board: Board): Board {
+  // The editor stores rows top-to-bottom; TBP/Cold Clear expects row 0 at y=0
+  // (the bottom of the playfield).
+  return [...board].reverse().map((row) => [...row]);
+}
+
 function pieceName(piece: Piece) {
   return PIECE_NAMES[piece];
+}
+
+// TBP x/y is the SRS True Rotation center, not the mino bounding-box corner.
+// The north-state centers are the fixed JLSTZ pivot mino, I's middle-left mino,
+// and O's bottom-left mino. Rotating these offsets preserves the true-rotation
+// coordinate convention for east, south and west (including I/O center shifts).
+const SRS_NORTH_CELLS: Record<Piece, Array<[number, number]>> = {
+  I: [
+    [-1, 0],
+    [0, 0],
+    [1, 0],
+    [2, 0],
+  ],
+  O: [
+    [0, 0],
+    [1, 0],
+    [0, 1],
+    [1, 1],
+  ],
+  T: [
+    [-1, 0],
+    [0, 0],
+    [1, 0],
+    [0, 1],
+  ],
+  L: [
+    [-1, 0],
+    [0, 0],
+    [1, 0],
+    [1, 1],
+  ],
+  J: [
+    [-1, 0],
+    [0, 0],
+    [1, 0],
+    [-1, 1],
+  ],
+  S: [
+    [-1, 0],
+    [0, 0],
+    [0, 1],
+    [1, 1],
+  ],
+  Z: [
+    [-1, 1],
+    [0, 1],
+    [0, 0],
+    [1, 0],
+  ],
+};
+
+const ROTATIONS: Rotation[] = ["north", "east", "south", "west"];
+const SRS_TRUE_ROTATION_CELLS: Record<
+  Piece,
+  Record<Rotation, Array<[number, number]>>
+> = Object.fromEntries(
+  Object.entries(SRS_NORTH_CELLS).map(([piece, northCells]) => {
+    const byOrientation = {} as Record<Rotation, Array<[number, number]>>;
+    let cells = northCells;
+    ROTATIONS.forEach((orientation) => {
+      byOrientation[orientation] = cells;
+      cells = cells.map(([x, y]): [number, number] => [y, -x]);
+    });
+    return [piece, byOrientation];
+  }),
+) as Record<Piece, Record<Rotation, Array<[number, number]>>>;
+
+function boardAfterPlacement(board: Board, move: Placement) {
+  const next = board.map((row) => [...row]);
+
+  for (const [offsetX, offsetY] of SRS_TRUE_ROTATION_CELLS[move.location.type][
+    move.location.orientation
+  ]) {
+    const column = move.location.x + offsetX;
+    const boardY = move.location.y + offsetY;
+    const row = START_ROWS - 1 - boardY;
+    if (row >= 0 && row < START_ROWS && column >= 0 && column < 10)
+      next[row][column] = move.location.type;
+  }
+
+  const remainingRows = next.filter((row) => !row.every(Boolean));
+  const clearedLines = START_ROWS - remainingRows.length;
+  const resultBoard = [
+    ...Array.from({ length: clearedLines }, () => Array<Cell>(10).fill(null)),
+    ...remainingRows,
+  ];
+  return { board: resultBoard, clearedLines };
 }
 
 function readSavedRegion(): SavedRegion | undefined {
@@ -55,7 +148,8 @@ function saveRegionFromCapture(
     !viewportHeight ||
     box.width <= 0 ||
     box.height <= 0
-  ) return;
+  )
+    return;
   const normalized = {
     x: box.x / viewportWidth,
     y: box.y / viewportHeight,
@@ -161,7 +255,16 @@ function beginRegionSelection(
     ["sw", "nesw-resize"],
     ["w", "ew-resize"],
   ];
-  const handlePlacement: Record<string, { left?: string; right?: string; top?: string; bottom?: string; transform: string }> = {
+  const handlePlacement: Record<
+    string,
+    {
+      left?: string;
+      right?: string;
+      top?: string;
+      bottom?: string;
+      transform: string;
+    }
+  > = {
     nw: { left: "0", top: "0", transform: "translate(-50%, -50%)" },
     n: { left: "50%", top: "0", transform: "translate(-50%, -50%)" },
     ne: { right: "0", top: "0", transform: "translate(50%, -50%)" },
@@ -322,8 +425,20 @@ function beginRegionSelection(
     if (dragMode === "move") {
       box = {
         ...originBox,
-        x: Math.max(0, Math.min(innerWidth - originBox.width, originBox.x + event.clientX - startX)),
-        y: Math.max(0, Math.min(innerHeight - originBox.height, originBox.y + event.clientY - startY)),
+        x: Math.max(
+          0,
+          Math.min(
+            innerWidth - originBox.width,
+            originBox.x + event.clientX - startX,
+          ),
+        ),
+        y: Math.max(
+          0,
+          Math.min(
+            innerHeight - originBox.height,
+            originBox.y + event.clientY - startY,
+          ),
+        ),
       };
       renderBox();
       placeToolbar();
@@ -334,10 +449,14 @@ function beginRegionSelection(
     let top = originBox.y;
     let right = originBox.x + originBox.width;
     let bottom = originBox.y + originBox.height;
-    if (activeHandle.includes("w")) left = Math.max(0, Math.min(event.clientX, right - 100));
-    if (activeHandle.includes("e")) right = Math.min(innerWidth, Math.max(event.clientX, left + 100));
-    if (activeHandle.includes("n")) top = Math.max(0, Math.min(event.clientY, bottom - rows * 5));
-    if (activeHandle.includes("s")) bottom = Math.min(innerHeight, Math.max(event.clientY, top + rows * 5));
+    if (activeHandle.includes("w"))
+      left = Math.max(0, Math.min(event.clientX, right - 100));
+    if (activeHandle.includes("e"))
+      right = Math.min(innerWidth, Math.max(event.clientX, left + 100));
+    if (activeHandle.includes("n"))
+      top = Math.max(0, Math.min(event.clientY, bottom - rows * 5));
+    if (activeHandle.includes("s"))
+      bottom = Math.min(innerHeight, Math.max(event.clientY, top + rows * 5));
     box = { x: left, y: top, width: right - left, height: bottom - top };
     renderBox();
     placeToolbar();
@@ -347,7 +466,8 @@ function beginRegionSelection(
     const completedMode = dragMode;
     dragMode = null;
     if (completedMode !== "draw") {
-      promptText.textContent = "枠内をドラッグして移動、辺や角をドラッグして微調整";
+      promptText.textContent =
+        "枠内をドラッグして移動、辺や角をドラッグして微調整";
       placeToolbar();
       return;
     }
@@ -358,7 +478,8 @@ function beginRegionSelection(
       return;
     }
     selected = true;
-    promptText.textContent = "枠内をドラッグして移動、辺や角をドラッグして微調整";
+    promptText.textContent =
+      "枠内をドラッグして移動、辺や角をドラッグして微調整";
     setHandlesVisible(true);
     toolbar.style.display = "flex";
     placeToolbar();
@@ -388,7 +509,8 @@ function beginRegionSelection(
         viewportWidth: innerWidth,
         viewportHeight: innerHeight,
       });
-      if (!response?.ok) throw new Error(response?.error ?? "撮影に失敗しました。");
+      if (!response?.ok)
+        throw new Error(response?.error ?? "撮影に失敗しました。");
       await chrome.runtime.sendMessage({
         type: "board-screenshot-captured",
         selectionId,
@@ -404,7 +526,8 @@ function beginRegionSelection(
       selected = true;
       captureButton.disabled = false;
       captureButton.textContent = "もう一度撮影";
-      promptText.textContent = error instanceof Error ? error.message : "撮影に失敗しました。";
+      promptText.textContent =
+        error instanceof Error ? error.message : "撮影に失敗しました。";
       toolbar.style.display = "flex";
       placeToolbar();
       sendNotice("board-screenshot-retry");
@@ -412,15 +535,34 @@ function beginRegionSelection(
   });
 
   if (initialRegion) {
-    box.width = Math.min(innerWidth, Math.max(100, Math.round(initialRegion.width * innerWidth)));
-    box.height = Math.min(innerHeight, Math.max(rows * 5, Math.round(initialRegion.height * innerHeight)));
-    box.x = Math.max(0, Math.min(innerWidth - box.width, Math.round(initialRegion.x * innerWidth)));
-    box.y = Math.max(0, Math.min(innerHeight - box.height, Math.round(initialRegion.y * innerHeight)));
+    box.width = Math.min(
+      innerWidth,
+      Math.max(100, Math.round(initialRegion.width * innerWidth)),
+    );
+    box.height = Math.min(
+      innerHeight,
+      Math.max(rows * 5, Math.round(initialRegion.height * innerHeight)),
+    );
+    box.x = Math.max(
+      0,
+      Math.min(
+        innerWidth - box.width,
+        Math.round(initialRegion.x * innerWidth),
+      ),
+    );
+    box.y = Math.max(
+      0,
+      Math.min(
+        innerHeight - box.height,
+        Math.round(initialRegion.y * innerHeight),
+      ),
+    );
     selected = box.width >= 100 && box.height >= rows * 5;
     if (selected) {
       renderBox();
       setHandlesVisible(true);
-      promptText.textContent = "前回の範囲を復元しました。枠内を移動、辺や角で微調整できます";
+      promptText.textContent =
+        "前回の範囲を復元しました。枠内を移動、辺や角で微調整できます";
       toolbar.style.display = "flex";
       placeToolbar();
     }
@@ -439,7 +581,7 @@ function App() {
   const [hold, setHold] = useState<Piece | "">("");
   const [combo, setCombo] = useState(0);
   const [backToBack, setBackToBack] = useState(false);
-  const [iterations, setIterations] = useState(5000);
+  const [iterations, setIterations] = useState("5000");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [captureError, setCaptureError] = useState("");
@@ -447,15 +589,20 @@ function App() {
     "idle" | "selecting" | "capturing" | "analyzing"
   >("idle");
   const [result, setResult] = useState<{
-    moves: Placement[];
+    steps: Array<{ move: Placement; board: Board; clearedLines: number }>;
     nodes: number;
     nps: number;
   } | null>(null);
+  const [activeStepIndex, setActiveStepIndex] = useState(0);
 
   const visibleRows = useMemo(
     () => board.slice(START_ROWS - height),
     [board, height],
   );
+  const placeholderBoard = useMemo(emptyBoard, []);
+  const resultSteps = result?.steps ?? [];
+  const slideCount = Math.max(1, resultSteps.length);
+  const activeResultStep = resultSteps[activeStepIndex];
 
   useEffect(() => {
     const stopPainting = () => {
@@ -482,7 +629,10 @@ function App() {
       viewportWidth?: number;
       viewportHeight?: number;
     }) => {
-      if (!message.selectionId || message.selectionId !== captureSession.current)
+      if (
+        !message.selectionId ||
+        message.selectionId !== captureSession.current
+      )
         return;
       if (message.type === "board-screenshot-cancelled") {
         saveRegionFromCapture(
@@ -576,7 +726,10 @@ function App() {
     setCaptureStatus("selecting");
     try {
       const permissions = chrome.runtime.getManifest().permissions ?? [];
-      if (!permissions.includes("activeTab") || !permissions.includes("scripting")) {
+      if (
+        !permissions.includes("activeTab") ||
+        !permissions.includes("scripting")
+      ) {
         throw new Error(
           "画面読み取りの権限が未反映です。chrome://extensions で拡張機能を再読み込みしてください。",
         );
@@ -614,6 +767,8 @@ function App() {
     setLoading(true);
     setError("");
     setResult(null);
+    setActiveStepIndex(0);
+    const analyzedBoard = board.map((row) => [...row]);
     const worker = new Worker(
       new URL("./analysis.worker.ts", import.meta.url),
       { type: "module" },
@@ -633,8 +788,15 @@ function App() {
         setError(event.data.error ?? "解析に失敗しました。");
         return;
       }
+      const moves = event.data.moves ?? [];
+      let currentBoard = analyzedBoard;
+      const steps = moves.map((move) => {
+        const afterPlacement = boardAfterPlacement(currentBoard, move);
+        currentBoard = afterPlacement.board;
+        return { move, ...afterPlacement };
+      });
       setResult({
-        moves: event.data.moves ?? [],
+        steps,
         nodes: event.data.nodes ?? 0,
         nps: event.data.nps ?? 0,
       });
@@ -647,12 +809,15 @@ function App() {
       );
     };
     worker.postMessage({
-      board,
+      board: boardToTbpRows(analyzedBoard),
       queue,
       hold: hold || undefined,
       combo,
       backToBack,
-      iterations: Math.max(1, Math.min(100000, iterations)),
+      iterations: Math.max(
+        1,
+        Math.min(100000, Math.floor(Number(iterations) || 1)),
+      ),
     });
   };
 
@@ -734,7 +899,8 @@ function App() {
         </div>
         {captureStatus !== "idle" && (
           <p className="capture-status" role="status">
-            {captureStatus === "selecting" && "ページ上で盤面範囲を選択してください"}
+            {captureStatus === "selecting" &&
+              "ページ上で盤面範囲を選択してください"}
             {captureStatus === "capturing" && "スクリーンショットを撮影中…"}
             {captureStatus === "analyzing" && "セルの色を解析中…"}
           </p>
@@ -885,16 +1051,23 @@ function App() {
 
       <section className="analysis-section">
         <label className="iteration-control">
-          探索量{" "}
-          <select
+          <span>探索量</span>
+          <input
+            type="number"
+            aria-label="探索量"
+            min="1"
+            max="100000"
+            step="1"
+            list="iteration-presets"
             value={iterations}
-            onChange={(e) => setIterations(Number(e.target.value))}
-          >
-            <option value={1000}>軽い · 1,000</option>
-            <option value={5000}>標準 · 5,000</option>
-            <option value={20000}>深い · 20,000</option>
-            <option value={50000}>最大 · 50,000</option>
-          </select>
+            onChange={(e) => setIterations(e.target.value)}
+          />
+          <datalist id="iteration-presets">
+            <option value="1000" label="軽い" />
+            <option value="5000" label="標準" />
+            <option value="20000" label="深い" />
+            <option value="50000" label="最深プリセット" />
+          </datalist>
         </label>
         <button
           className="analyze-button"
@@ -904,7 +1077,7 @@ function App() {
           <span>{loading ? "解析中…" : "盤面を解析"}</span>
           <span className="button-arrow">{loading ? "◌" : "→"}</span>
         </button>
-        <p className="engine-note">Cold Clear 2 をブラウザー内で実行します</p>
+        <p className="engine-note">入力したネクストに沿って連続解析します</p>
       </section>
 
       {error && (
@@ -912,55 +1085,153 @@ function App() {
           {error}
         </div>
       )}
-      {result && (
-        <section className="result-card" aria-live="polite">
-          <div className="result-heading">
-            <div>
-              <span className="step-number">04</span>
-              <h2>推奨手</h2>
-            </div>
-            <span className="engine-stat">
-              {result.nodes.toLocaleString()} nodes ·{" "}
-              {result.nps.toLocaleString()} n/s
-            </span>
+      <section className="result-card" aria-live="polite">
+        <div className="result-heading">
+          <div>
+            <span className="step-number">04</span>
+            <h2>着地後の盤面</h2>
           </div>
-          {result.moves.length === 0 ? (
-            <p className="empty-result">
-              候補手がありません。盤面とネクストを確認してください。
-            </p>
+          <span className="engine-stat">
+            {result
+              ? `${result.nodes.toLocaleString()} nodes · ${result.nps.toLocaleString()} n/s`
+              : "解析前"}
+          </span>
+        </div>
+        <div className="carousel-controls" aria-label="盤面の手順">
+          <button
+            className="carousel-button"
+            type="button"
+            aria-label="前の手の盤面"
+            disabled={!activeResultStep || activeStepIndex === 0}
+            onClick={() =>
+              setActiveStepIndex((index) => Math.max(0, index - 1))
+            }
+          >
+            ← 前
+          </button>
+          <span aria-live="polite">
+            {resultSteps.length > 0
+              ? `${activeStepIndex + 1} / ${resultSteps.length} 手目`
+              : result
+                ? "候補なし"
+                : "未解析"}
+          </span>
+          <button
+            className="carousel-button"
+            type="button"
+            aria-label="次の手の盤面"
+            disabled={
+              !activeResultStep || activeStepIndex >= resultSteps.length - 1
+            }
+            onClick={() =>
+              setActiveStepIndex((index) =>
+                Math.min(resultSteps.length - 1, index + 1),
+              )
+            }
+          >
+            次 →
+          </button>
+        </div>
+        <div className="preview-meta">
+          {activeResultStep ? (
+            <>
+              <span>
+                {activeResultStep.move.location.type} ミノ ·{" "}
+                {activeResultStep.move.location.orientation.toUpperCase()}
+                {activeResultStep.move.spin === "none"
+                  ? ""
+                  : ` · ${activeResultStep.move.spin} spin`}
+              </span>
+              <span>{activeResultStep.clearedLines} ライン消去</span>
+            </>
           ) : (
-            <ol className="move-list">
-              {result.moves.slice(0, 5).map((move, i) => (
-                <li
-                  key={`${move.location.type}-${move.location.x}-${move.location.y}-${i}`}
-                  className={i === 0 ? "best-move" : ""}
-                >
-                  <span className="move-rank">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span
-                    className={`move-piece piece-${move.location.type.toLowerCase()}`}
-                  >
-                    {move.location.type}
-                  </span>
-                  <span className="move-detail">
-                    {move.location.orientation.toUpperCase()}{" "}
-                    <small>
-                      X {move.location.x} · Y {move.location.y}
-                    </small>
-                  </span>
-                  <span className="spin-tag">
-                    {move.spin === "none" ? "通常" : `${move.spin} spin`}
-                  </span>
-                </li>
-              ))}
-            </ol>
+            <>
+              <span>{result ? "候補手なし" : "解析すると盤面を表示"}</span>
+              <span>— ライン消去</span>
+            </>
           )}
-          <p className="result-footnote">
-            候補は Cold Clear の評価順です。座標は TBP 形式です。
-          </p>
-        </section>
-      )}
+        </div>
+        <div className="preview-window">
+          <div
+            className="preview-track"
+            style={{
+              width: `${slideCount * 100}%`,
+              transform: `translateX(-${(activeStepIndex * 100) / slideCount}%)`,
+            }}
+          >
+            {resultSteps.length > 0 ? (
+              resultSteps.map((step, stepIndex) => (
+                <div
+                  className="preview-slide"
+                  key={`step-${stepIndex}`}
+                  style={{ flex: `0 0 ${100 / slideCount}%` }}
+                  aria-hidden={stepIndex !== activeStepIndex}
+                >
+                  <div
+                    className="board-editor preview-board"
+                    role="grid"
+                    aria-label={`${stepIndex + 1}手目のあと盤面`}
+                    style={{
+                      gridTemplateRows: `repeat(${height}, minmax(0, 1fr))`,
+                      aspectRatio: `10 / ${height}`,
+                    }}
+                  >
+                    {step.board
+                      .slice(START_ROWS - height)
+                      .flatMap((row, y) =>
+                        row.map((cell, x) => (
+                          <div
+                            aria-label={`${height - y}段目 ${x + 1}列目 ${cell === "G" ? "お邪魔ブロック" : cell ? pieceName(cell) : "空"}`}
+                            className={`cell preview-cell ${cell ? `filled piece-${cell.toLowerCase()}` : ""}`}
+                            key={`preview-${stepIndex}-${y}-${x}`}
+                            role="gridcell"
+                          />
+                        )),
+                      )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div
+                className="preview-slide"
+                key="empty-board"
+                style={{ flex: "0 0 100%" }}
+                aria-hidden="false"
+              >
+                <div
+                  className="board-editor preview-board"
+                  role="grid"
+                  aria-label="解析前の空盤面"
+                  style={{
+                    gridTemplateRows: `repeat(${height}, minmax(0, 1fr))`,
+                    aspectRatio: `10 / ${height}`,
+                  }}
+                >
+                  {placeholderBoard
+                    .slice(START_ROWS - height)
+                    .flatMap((row, y) =>
+                      row.map((_, x) => (
+                        <div
+                          aria-label={`${height - y}段目 ${x + 1}列目 空`}
+                          className="cell preview-cell"
+                          key={`placeholder-${y}-${x}`}
+                          role="gridcell"
+                        />
+                      )),
+                    )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        <p className="result-footnote">
+          {result
+            ? resultSteps.length > 0
+              ? "入力したネクストに沿って最上位候補を続けて適用しています。"
+              : "候補手がありません。盤面とネクストを確認してください。"
+            : "盤面を解析すると、着地後の盤面をここに表示します。"}
+        </p>
+      </section>
       <footer className="app-footer">
         <span className="status-dot" />
         オフライン解析 · データは端末内で処理
