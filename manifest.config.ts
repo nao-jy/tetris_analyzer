@@ -3,6 +3,9 @@ import pkg from "./package.json";
 
 export default defineManifest({
   manifest_version: 3,
+  content_security_policy: {
+    extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
+  },
   name: pkg.name,
   description: pkg.description,
   version: pkg.version,

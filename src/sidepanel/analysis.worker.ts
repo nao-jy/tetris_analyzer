@@ -37,7 +37,7 @@ workerScope.onmessage = async (event: MessageEvent<AnalysisRequest>) => {
   try {
     const { board, queue, hold, combo, backToBack, iterations, errors } =
       event.data;
-    await initWasm(wasmUrl);
+    await initWasm({ module_or_path: wasmUrl });
     configure(botConfigJson as unknown as BotConfig);
     initialize();
     const started = process_message({
