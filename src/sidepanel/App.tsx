@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { t } from "../i18n";
 import type { Piece, Placement, Rotation } from "../coldclear/cold_clear_2";
 import { imageToBoard } from "./imageAnalysis";
 import "./App.css";
@@ -561,7 +561,6 @@ function beginRegionSelection(
 }
 
 function App() {
-  const { t } = useTranslation();
   const [board, setBoard] = useState<Board>(emptyBoard);
   const [height, setHeight] = useState(START_HEIGHT);
   const [tool, setTool] = useState<Cell>("T");

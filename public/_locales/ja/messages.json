@@ -1,0 +1,357 @@
+{
+  "appName": {
+    "message": "盤面アナライザー"
+  },
+  "moveIndex": {
+    "message": "$n$手目",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "mino": {
+    "message": "ミノ"
+  },
+  "board": {
+    "message": "盤面"
+  },
+  "gameState": {
+    "message": "ゲーム状態"
+  },
+  "conditions": {
+    "message": "解析条件"
+  },
+  "scan": {
+    "message": "画像から"
+  },
+  "scanTitle": {
+    "message": "ページ上で盤面範囲を選択して読み取る"
+  },
+  "height": {
+    "message": "高さ"
+  },
+  "rows": {
+    "message": "$n$段",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "clear": {
+    "message": "クリア"
+  },
+  "boardLabel": {
+    "message": "$n$段のテトリス盤面",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "garbage": {
+    "message": "お邪魔ブロック"
+  },
+  "empty": {
+    "message": "空"
+  },
+  "cellTitle": {
+    "message": "$x$列・$y$段",
+    "placeholders": {
+      "x": {
+        "content": "$1"
+      },
+      "y": {
+        "content": "$2"
+      }
+    }
+  },
+  "columnsRows": {
+    "message": "10 列 × $n$ 段",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "dragEdit": {
+    "message": "ドラッグして連続編集"
+  },
+  "selectBoard": {
+    "message": "ページ上で盤面範囲を選択してください"
+  },
+  "takingScreenshot": {
+    "message": "スクリーンショットを撮影中…"
+  },
+  "analyzingCells": {
+    "message": "セルの色を解析中…"
+  },
+  "cellColors": {
+    "message": "セルの色"
+  },
+  "erase": {
+    "message": "消去"
+  },
+  "hold": {
+    "message": "ホールド"
+  },
+  "none": {
+    "message": "なし"
+  },
+  "combo": {
+    "message": "REN / コンボ"
+  },
+  "b2b": {
+    "message": "B2B継続中"
+  },
+  "next": {
+    "message": "ネクスト"
+  },
+  "count": {
+    "message": "$n$ 個",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "nextIndex": {
+    "message": "ネクスト $n$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "removeNext": {
+    "message": "ネクスト $n$ を削除",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "addNext": {
+    "message": "＋ ネクストを追加"
+  },
+  "searchAmount": {
+    "message": "探索量"
+  },
+  "light": {
+    "message": "軽い"
+  },
+  "standard": {
+    "message": "標準"
+  },
+  "deep": {
+    "message": "深い"
+  },
+  "deepest": {
+    "message": "最深プリセット"
+  },
+  "analyzing": {
+    "message": "解析中…"
+  },
+  "analyze": {
+    "message": "盤面を解析"
+  },
+  "engineNote": {
+    "message": "入力したネクストに沿って連続解析します"
+  },
+  "afterBoard": {
+    "message": "着地後の盤面"
+  },
+  "beforeAnalysis": {
+    "message": "解析前"
+  },
+  "boardSteps": {
+    "message": "盤面の手順"
+  },
+  "prevBoard": {
+    "message": "前の手の盤面"
+  },
+  "prev": {
+    "message": "← 前"
+  },
+  "noCandidates": {
+    "message": "候補なし"
+  },
+  "notAnalyzed": {
+    "message": "未解析"
+  },
+  "nextBoard": {
+    "message": "次の手の盤面"
+  },
+  "nextArrow": {
+    "message": "次 →"
+  },
+  "nthMove": {
+    "message": "$n$手目",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "spin": {
+    "message": "$spin$ spin",
+    "placeholders": {
+      "spin": {
+        "content": "$1"
+      }
+    }
+  },
+  "linesCleared": {
+    "message": "$n$ ライン消去",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "showBoardAfterAnalysis": {
+    "message": "解析すると盤面を表示"
+  },
+  "noCandidatesAvailable": {
+    "message": "候補手なし"
+  },
+  "linesClearedDash": {
+    "message": "— ライン消去"
+  },
+  "boardAfterMove": {
+    "message": "$n$手目のあと盤面",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "emptyBoardBeforeAnalysis": {
+    "message": "解析前の空盤面"
+  },
+  "resultApplied": {
+    "message": "入力したネクストに沿って最上位候補を続けて適用しています。"
+  },
+  "noResult": {
+    "message": "候補手がありません。盤面とネクストを確認してください。"
+  },
+  "analyzeToShow": {
+    "message": "盤面を解析すると、着地後の盤面をここに表示します。"
+  },
+  "offline": {
+    "message": "オフライン解析 · データは端末内で処理"
+  },
+  "popupTitle": {
+    "message": "サイドパネルで解析"
+  },
+  "popupDesc": {
+    "message": "盤面の編集や候補手の確認は、サイドパネルから行えます。"
+  },
+  "openPanel": {
+    "message": "サイドパネルを開く"
+  },
+  "popupHint": {
+    "message": "ページを見ながら、横で盤面を分析できます。"
+  },
+  "language": {
+    "message": "言語"
+  },
+  "japanese": {
+    "message": "日本語"
+  },
+  "english": {
+    "message": "English"
+  },
+  "windowError": {
+    "message": "ウィンドウを取得できませんでした。"
+  },
+  "openPanelError": {
+    "message": "サイドパネルを開けませんでした。Chromeを最新版にして、もう一度お試しください。"
+  },
+  "cancel": {
+    "message": "キャンセル"
+  },
+  "captureBoard": {
+    "message": "撮影して盤面に反映"
+  },
+  "retrySelection": {
+    "message": "範囲を選び直す"
+  },
+  "dragSelectSized": {
+    "message": "盤面の左上から右下までドラッグ（10列 × $n$段）",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "resizeHint": {
+    "message": "枠の辺や角をドラッグしてサイズを調整"
+  },
+  "moveHint": {
+    "message": "枠をドラッグして位置を調整"
+  },
+  "selectHint": {
+    "message": "盤面の左上から右下までドラッグして範囲を選択"
+  },
+  "adjustHint": {
+    "message": "枠内をドラッグして移動、辺や角をドラッグして微調整"
+  },
+  "tooSmall": {
+    "message": "範囲が小さすぎます。大きめに選択してください"
+  },
+  "capturing": {
+    "message": "撮影中…"
+  },
+  "captureAgain": {
+    "message": "もう一度撮影"
+  },
+  "captureFailed": {
+    "message": "撮影に失敗しました。"
+  },
+  "restored": {
+    "message": "前回の範囲を復元しました。枠内を移動、辺や角で微調整できます"
+  },
+  "imageFailed": {
+    "message": "画像を解析できませんでした。"
+  },
+  "permissionError": {
+    "message": "画面読み取りの権限が未反映です。chrome://extensions で拡張機能を再読み込みしてください。"
+  },
+  "noTab": {
+    "message": "撮影するタブが見つかりませんでした。"
+  },
+  "selectionFailed": {
+    "message": "範囲選択を開始できませんでした。拡張機能を再読み込みして再試行してください。"
+  },
+  "analysisFailed": {
+    "message": "解析に失敗しました。"
+  },
+  "workerFailed": {
+    "message": "解析ワーカーを起動できませんでした。拡張機能を再読み込みしてください。"
+  },
+  "captureImageLoadFailed": {
+    "message": "撮影画像を読み込めませんでした"
+  },
+  "canvasFailed": {
+    "message": "画像解析用のCanvasを作成できませんでした"
+  },
+  "boardRejected": {
+    "message": "盤面を受け付けませんでした。"
+  },
+  "moveFailed": {
+    "message": "着手を適用できませんでした。"
+  },
+  "overlayInstructions": {
+    "message": "10 columns × $n$ rows: drag from the top-left to the bottom-right of the board",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "extensionDescription": {
+    "message": "テトリス盤面を解析するChrome拡張機能"
+  }
+}

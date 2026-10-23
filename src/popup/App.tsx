@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { t } from "../i18n";
 import "./App.css";
 
 export default function App() {
-  const { t, i18n } = useTranslation();
   const [error, setError] = useState("");
 
   const openSidePanel = async () => {
@@ -47,17 +46,6 @@ export default function App() {
         </p>
       )}
       <p className="popup-hint">{t("popupHint")}</p>
-      <label className="language-control">
-        <span>{t("language")}</span>
-        <select
-          aria-label={t("language")}
-          value={i18n.resolvedLanguage ?? i18n.language}
-          onChange={(event) => void i18n.changeLanguage(event.target.value)}
-        >
-          <option value="ja">{t("japanese")}</option>
-          <option value="en">{t("english")}</option>
-        </select>
-      </label>
     </main>
   );
 }

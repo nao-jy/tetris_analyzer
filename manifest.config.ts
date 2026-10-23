@@ -6,9 +6,10 @@ export default defineManifest({
   content_security_policy: {
     extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
   },
-  name: pkg.name,
-  description: pkg.description,
+  name: "__MSG_appName__",
+  description: "__MSG_extensionDescription__",
   version: pkg.version,
+  default_locale: "en",
   icons: {
     48: "public/logo.png",
   },

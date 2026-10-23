@@ -1,0 +1,357 @@
+{
+  "appName": {
+    "message": "Tetris Board Analyzer"
+  },
+  "moveIndex": {
+    "message": "Move $n$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "mino": {
+    "message": "mino"
+  },
+  "board": {
+    "message": "Board"
+  },
+  "gameState": {
+    "message": "Game state"
+  },
+  "conditions": {
+    "message": "Analysis settings"
+  },
+  "scan": {
+    "message": "Scan image"
+  },
+  "scanTitle": {
+    "message": "Select and read the board area on the page"
+  },
+  "height": {
+    "message": "Height"
+  },
+  "rows": {
+    "message": "$n$ rows",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "clear": {
+    "message": "Clear"
+  },
+  "boardLabel": {
+    "message": "$n$-row Tetris board",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "garbage": {
+    "message": "Garbage block"
+  },
+  "empty": {
+    "message": "Empty"
+  },
+  "cellTitle": {
+    "message": "Column $x$ · Row $y$",
+    "placeholders": {
+      "x": {
+        "content": "$1"
+      },
+      "y": {
+        "content": "$2"
+      }
+    }
+  },
+  "columnsRows": {
+    "message": "10 columns × $n$ rows",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "dragEdit": {
+    "message": "Drag to paint cells"
+  },
+  "selectBoard": {
+    "message": "Select the board area on the page"
+  },
+  "takingScreenshot": {
+    "message": "Taking screenshot…"
+  },
+  "analyzingCells": {
+    "message": "Analyzing cell colors…"
+  },
+  "cellColors": {
+    "message": "Cell colors"
+  },
+  "erase": {
+    "message": "Erase"
+  },
+  "hold": {
+    "message": "Hold"
+  },
+  "none": {
+    "message": "None"
+  },
+  "combo": {
+    "message": "REN / Combo"
+  },
+  "b2b": {
+    "message": "Back-to-back active"
+  },
+  "next": {
+    "message": "Next queue"
+  },
+  "count": {
+    "message": "$n$ pieces",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "nextIndex": {
+    "message": "Next piece $n$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "removeNext": {
+    "message": "Remove next piece $n$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "addNext": {
+    "message": "+ Add next piece"
+  },
+  "searchAmount": {
+    "message": "Search depth"
+  },
+  "light": {
+    "message": "Light"
+  },
+  "standard": {
+    "message": "Standard"
+  },
+  "deep": {
+    "message": "Deep"
+  },
+  "deepest": {
+    "message": "Deepest preset"
+  },
+  "analyzing": {
+    "message": "Analyzing…"
+  },
+  "analyze": {
+    "message": "Analyze board"
+  },
+  "engineNote": {
+    "message": "Analyze consecutive placements using the entered queue"
+  },
+  "afterBoard": {
+    "message": "Board after placement"
+  },
+  "beforeAnalysis": {
+    "message": "Not analyzed"
+  },
+  "boardSteps": {
+    "message": "Board steps"
+  },
+  "prevBoard": {
+    "message": "Previous move board"
+  },
+  "prev": {
+    "message": "← Prev"
+  },
+  "noCandidates": {
+    "message": "No candidates"
+  },
+  "notAnalyzed": {
+    "message": "Not analyzed"
+  },
+  "nextBoard": {
+    "message": "Next move board"
+  },
+  "nextArrow": {
+    "message": "Next →"
+  },
+  "nthMove": {
+    "message": "Move $n$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "spin": {
+    "message": "$spin$ spin",
+    "placeholders": {
+      "spin": {
+        "content": "$1"
+      }
+    }
+  },
+  "linesCleared": {
+    "message": "$n$ lines cleared",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "showBoardAfterAnalysis": {
+    "message": "Board appears after analysis"
+  },
+  "noCandidatesAvailable": {
+    "message": "No candidate moves"
+  },
+  "linesClearedDash": {
+    "message": "— lines cleared"
+  },
+  "boardAfterMove": {
+    "message": "Board after move $n$",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "emptyBoardBeforeAnalysis": {
+    "message": "Empty board before analysis"
+  },
+  "resultApplied": {
+    "message": "Applying the top candidate repeatedly using the entered queue."
+  },
+  "noResult": {
+    "message": "No candidate moves. Check the board and next queue."
+  },
+  "analyzeToShow": {
+    "message": "Analyze the board to see the resulting position here."
+  },
+  "offline": {
+    "message": "Offline analysis · data stays on this device"
+  },
+  "popupTitle": {
+    "message": "Analyze in the side panel"
+  },
+  "popupDesc": {
+    "message": "Edit the board and review candidate moves in the side panel."
+  },
+  "openPanel": {
+    "message": "Open side panel"
+  },
+  "popupHint": {
+    "message": "Analyze the board alongside the page."
+  },
+  "language": {
+    "message": "Language"
+  },
+  "japanese": {
+    "message": "日本語"
+  },
+  "english": {
+    "message": "English"
+  },
+  "windowError": {
+    "message": "Could not get the current window."
+  },
+  "openPanelError": {
+    "message": "Could not open the side panel. Update Chrome to the latest version and try again."
+  },
+  "cancel": {
+    "message": "Cancel"
+  },
+  "captureBoard": {
+    "message": "Capture and update board"
+  },
+  "retrySelection": {
+    "message": "Select area again"
+  },
+  "dragSelectSized": {
+    "message": "Drag from the board's top-left to bottom-right (10 columns × $n$ rows)",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "resizeHint": {
+    "message": "Drag an edge or corner to resize"
+  },
+  "moveHint": {
+    "message": "Drag the frame to move it"
+  },
+  "selectHint": {
+    "message": "Drag from the board's top-left to bottom-right to select an area"
+  },
+  "adjustHint": {
+    "message": "Drag inside the frame to move it, or drag an edge or corner to adjust"
+  },
+  "tooSmall": {
+    "message": "The selected area is too small. Select a larger area."
+  },
+  "capturing": {
+    "message": "Capturing…"
+  },
+  "captureAgain": {
+    "message": "Capture again"
+  },
+  "captureFailed": {
+    "message": "Capture failed."
+  },
+  "restored": {
+    "message": "Restored the previous area. Drag inside to move or use an edge or corner to adjust."
+  },
+  "imageFailed": {
+    "message": "Could not analyze the image."
+  },
+  "permissionError": {
+    "message": "Screen capture permission is missing. Reload the extension at chrome://extensions."
+  },
+  "noTab": {
+    "message": "Could not find a tab to capture."
+  },
+  "selectionFailed": {
+    "message": "Could not start area selection. Reload the extension and try again."
+  },
+  "analysisFailed": {
+    "message": "Analysis failed."
+  },
+  "workerFailed": {
+    "message": "Could not start the analysis worker. Reload the extension."
+  },
+  "captureImageLoadFailed": {
+    "message": "Could not load the captured image"
+  },
+  "canvasFailed": {
+    "message": "Could not create a canvas for image analysis"
+  },
+  "boardRejected": {
+    "message": "Board was rejected."
+  },
+  "moveFailed": {
+    "message": "Could not apply the move."
+  },
+  "overlayInstructions": {
+    "message": "Drag from the board's top-left to bottom-right (10 columns × $n$ rows)",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "extensionDescription": {
+    "message": "A Chrome extension for analyzing Tetris boards"
+  }
+}
